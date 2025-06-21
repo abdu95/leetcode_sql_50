@@ -1,5 +1,4 @@
 -- 2356. Number of Unique Subjects Taught by Each Teacher
--- SOLVED
 select 
     teacher_id,
     count(distinct subject_id) as cnt
@@ -8,7 +7,6 @@ group by teacher_id
 
 
 -- 610. Triangle Judgement
--- solved
 SELECT 
     x,
     y,
@@ -19,7 +17,6 @@ from Triangle
 
 
 -- 1789. Primary Department for Each Employee
--- solved 
 with Many_deps as  
     (select 
         employee_id,
@@ -47,7 +44,6 @@ select * from One_dep_id
 
 
 -- 1729. Find Followers Count
--- solved
 select 
     user_id,
     count(follower_id) as followers_count
@@ -56,7 +52,6 @@ group by user_id
 order by user_id
 
 -- 596. Classes With at Least 5 Students
--- solved
 with Class_count as 
     (select 
         class,
@@ -68,7 +63,6 @@ with Class_count as
 select class from Class_count
 
 -- 1633. Percentage of Users Attended a Contest
--- solved 
 select 
     contest_id,
     ROUND(CAST(count(user_id) as decimal) / (select count(user_id) from Users) * 100, 2) as percentage
@@ -78,7 +72,6 @@ order by percentage desc, contest_id asc
 
 
 -- 1251. Average Selling Price
--- solved 
 with Units_revenue as
     (select
         pr.product_id,
@@ -101,7 +94,6 @@ group by pr.product_id
 
 
 -- 1327. List the Products Ordered in a Period
--- solved 
 with Product_units as 
     (select 
         product_id,
@@ -121,7 +113,6 @@ where sum >= 100
 
 
 -- 1731. The Number of Employees Which Report to Each Employee
--- solved
 with Managers as 
     (select 
         reports_to as employee_id,
@@ -144,7 +135,6 @@ order by ma.employee_id
 
 
 -- 619. Biggest Single Number
--- solved 
 -- Encapsulate the query in a sub-query to transform "no row" to a null value
 -- https://stackoverflow.com/questions/8098795/return-a-value-if-no-record-is-found/8098816#8098816
 select 
