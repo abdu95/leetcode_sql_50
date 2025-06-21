@@ -2,11 +2,11 @@
 -- 570. Managers with at Least 5 Direct Reports
 
 With Count_managers as 
-(select 
-managerId, 
-Count(id) as count_emps
-from Employee
-group by managerId)
+    (select 
+    managerId, 
+    Count(id) as count_emps
+    from Employee
+    group by managerId)
 
 select em.name as name
 from Count_managers cm
@@ -159,6 +159,21 @@ select customer_id
 from Customer_product_count
 where count_product = (select count(product_key) from Product)
 
+-- ## 180. Consecutive Numbers
+
+With Prev_next as 
+    (select 
+    id,
+    lag(num) over(order by id) as prev_num,
+    num,
+    lead(num) over(order by id) as next_num
+    from Logs
+    order by id)
+
+select distinct num as ConsecutiveNums 
+from Prev_next
+where num = prev_num 
+AND prev_num = next_num
 
 -- ## 1164. Product Price at a Given Date
 
@@ -216,7 +231,7 @@ where sum_weight <= 1000
 order by sum_weight desc
 limit 1
 
-
+-- 25 May 2025
 -- ## 1907. Count Salary Categories
 
 with Categories as (
@@ -241,8 +256,6 @@ select
 from Accounts_count
 group by category;
 
--- 25 May 2025
--- ## 1907. Count Salary Categories
 -- https://stackoverflow.com/questions/1128737/equivalent-to-unpivot-in-postgresql
 
 --  array[a, b, c] returns an array object, with the values of a, b, and c as it's elements. 
@@ -277,96 +290,45 @@ select
 from Categories_renamed
 
 
+-- 4 Jun 2025
+-- 626. Exchange Seats
 
-
--- 28 May
--- ## 176. Second Highest Salary
-
-with Ranked_salaries as 
+with Prev_next as 
     (select 
-        dense_rank() over (order by salary desc) as salary_rank,  
-        salary
-    from Employee)
-select 
+        id,
+        student,
+        lag(id) over(order by id) as prev_id,
+        lag(student) over(order by id) as prev_stu,
+        lead(id) over(order by id) as next_id,
+        lead(student)  over(order by id) as next_stu
+    from Seat),
+    Prev_next_odd as 
     (select 
-        salary 
-    from Ranked_salaries
-    where salary_rank = 2
-    limit 1) as "SecondHighestSalary"
-
-
--- 29 May
--- ## 585. Investments in 2016
-
-with Count_2015 as 
+        id, 
+        COALESCE(next_stu, student) as student
+    from Prev_next
+    where MOD(id, 2) <> 0 ), 
+    Prev_next_even as 
     (select 
-        tiv_2015,
-        count(tiv_2015) as count_tiv_2015
-    from Insurance ins
-    group by tiv_2015),
-    Duplicate_2015 as
-    (select *
-    from Insurance
-    where tiv_2015 IN 
-        (select tiv_2015 
-        from Count_2015
-        where count_tiv_2015 >=2)),
-    Count_latlon as 
-        (select 
-            concat(lat, lon) as latlon,
-            count(concat(lat, lon)) as count_latlon
-        from Insurance
-        group by latlon),
-    Unique_latlon as 
+        id, 
+        prev_stu as student
+    from Prev_next
+    where MOD(id, 2) = 0 ),
+    Last_row as 
     (select 
-       *
-    from Insurance ins
-    join Count_latlon cl
-        on cl.latlon = concat(ins.lat, ins.lon) and count_latlon = 1)
+        id, 
+        student
+    from Prev_next
+    order by id desc
+    limit 1),
+    Result_set as 
+    (select * from Prev_next_odd
+    UNION
+    select * from Prev_next_even
+)
 
-select round(sum(dup.tiv_2016)::numeric, 2) as tiv_2016 
-from  Duplicate_2015 dup 
-join Unique_latlon ul 
-    on dup.pid = ul.pid
-
-
--- 2 June
--- ## 1321. Restaurant Growth
-
-WITH Sum_per_day as 
-    (select 
-        visited_on, 
-        SUM(cu.amount) as sum_amount 
-    from Customer cu
-    group by visited_on), 
-    Sum_amounts as 
-    (select 
-        visited_on,
-        sum_amount,
-        SUM(sum_amount) over(
-                            order by visited_on
-                            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
-                            as amount 
-    from Sum_per_day),
-    Moving_averages as 
-    (select 
-        visited_on,
-        amount,
-        AVG(sum_amount) over(
-                            order by visited_on
-                            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
-                            as average_amount 
-    from Sum_amounts 
-    group by visited_on),
-    Rounded_averages as 
-    (select 
-        visited_on,
-        amount,
-        round(average_amount, 2) as average_amount
-    from Moving_averages)
-
-select * from Rounded_averages
-where visited_on > (select min(visited_on) + interval '5' day from Customer)
+select * from Result_set
+order by id
 
 
 -- 3 Jun 2025
@@ -416,46 +378,44 @@ with Count_movies as
 select title as results from Movie_user
 
 
--- 4 Jun 2025
--- 626. Exchange Seats
 
-with Prev_next as 
-    (select 
-        id,
-        student,
-        lag(id) over(order by id) as prev_id,
-        lag(student) over(order by id) as prev_stu,
-        lead(id) over(order by id) as next_id,
-        lead(student)  over(order by id) as next_stu
-    from Seat),
-    Prev_next_odd as 
-    (select 
-        id, 
-        COALESCE(next_stu, student) as student
-    from Prev_next
-    where MOD(id, 2) <> 0 ), 
-    Prev_next_even as 
-    (select 
-        id, 
-        prev_stu as student
-    from Prev_next
-    where MOD(id, 2) = 0 ),
-    Last_row as 
-    (select 
-        id, 
-        student
-    from Prev_next
-    order by id desc
-    limit 1),
-    Result_set as 
-    (select * from Prev_next_odd
-    UNION
-    select * from Prev_next_even
-)
+-- 2 June
+-- ## 1321. Restaurant Growth
 
-select * from Result_set
-order by id
+WITH Sum_per_day as 
+    (select 
+        visited_on, 
+        SUM(cu.amount) as sum_amount 
+    from Customer cu
+    group by visited_on), 
+    Sum_amounts as 
+    (select 
+        visited_on,
+        sum_amount,
+        SUM(sum_amount) over(
+                            order by visited_on
+                            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
+                            as amount 
+    from Sum_per_day),
+    Moving_averages as 
+    (select 
+        visited_on,
+        amount,
+        AVG(sum_amount) over(
+                            order by visited_on
+                            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
+                            as average_amount 
+    from Sum_amounts 
+    group by visited_on),
+    Rounded_averages as 
+    (select 
+        visited_on,
+        amount,
+        round(average_amount, 2) as average_amount
+    from Moving_averages)
 
+select * from Rounded_averages
+where visited_on > (select min(visited_on) + interval '5' day from Customer)
 
 -- ## 602. Friend Requests II: Who Has the Most Friends
 
@@ -479,3 +439,55 @@ with Requestors as
 select * from Count_most
 order by num desc
 limit 1
+
+
+-- 29 May
+-- ## 585. Investments in 2016
+
+with Count_2015 as 
+    (select 
+        tiv_2015,
+        count(tiv_2015) as count_tiv_2015
+    from Insurance ins
+    group by tiv_2015),
+    Duplicate_2015 as
+    (select *
+    from Insurance
+    where tiv_2015 IN 
+        (select tiv_2015 
+        from Count_2015
+        where count_tiv_2015 >=2)),
+    Count_latlon as 
+        (select 
+            concat(lat, lon) as latlon,
+            count(concat(lat, lon)) as count_latlon
+        from Insurance
+        group by latlon),
+    Unique_latlon as 
+    (select 
+       *
+    from Insurance ins
+    join Count_latlon cl
+        on cl.latlon = concat(ins.lat, ins.lon) and count_latlon = 1)
+
+select round(sum(dup.tiv_2016)::numeric, 2) as tiv_2016 
+from  Duplicate_2015 dup 
+join Unique_latlon ul 
+    on dup.pid = ul.pid
+
+
+
+-- 28 May
+-- ## 176. Second Highest Salary
+
+with Ranked_salaries as 
+    (select 
+        dense_rank() over (order by salary desc) as salary_rank,  
+        salary
+    from Employee)
+select 
+    (select 
+        salary 
+    from Ranked_salaries
+    where salary_rank = 2
+    limit 1) as "SecondHighestSalary"
