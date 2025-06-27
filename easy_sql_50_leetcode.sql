@@ -55,6 +55,26 @@ where visit_id not in
     from Transactions)
 group by customer_id
 
+
+-- 197. Rising Temperature
+with Prev_Temperatures as 
+    (select 
+        we.*,
+        lag(recordDate) over(order by recordDate) as previous_day,
+        lag(temperature) over(order by recordDate) as prevTemperature
+    from Weather we), 
+    All_Temperatures as 
+    (select 
+        id,
+        recordDate,
+        temperature,
+        temperature - prevTemperature as delta_temp,
+        recordDate - previous_day as delta_day
+    from Prev_Temperatures)
+
+select id 
+from All_Temperatures
+where delta_day = 1 AND delta_temp >= 1
 	
 --  577. Employee Bonus
 with Emp_bonus as 
