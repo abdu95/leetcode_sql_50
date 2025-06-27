@@ -1,3 +1,74 @@
+-- 1757. Recyclable and Low Fat Products
+select product_id 
+from Products 
+where low_fats = 'Y' and recyclable = 'Y'
+
+
+-- 584. Find Customer Referee
+select name 
+from Customer
+where referee_id <> 2 or referee_id IS NULL
+
+
+-- 595. Big Countries
+select name, population, area
+from World
+where area >= 3000000 or population >= 25000000
+
+
+-- 1148. Article Views I
+select distinct author_id as id
+from Views
+where author_id = viewer_id
+
+
+-- 1683. Invalid Tweets
+select tweet_id 
+from Tweets 
+where length(content) > 15 
+
+
+
+-- 1378. Replace Employee ID With The Unique Identifier
+select emp_uni.unique_id, emp.name
+FROM Employees emp
+left join EmployeeUNI emp_uni
+    on emp.id = emp_uni.id 
+
+
+
+-- 1068. Product Sales Analysis I
+select pr.product_name, sa.year, sa.price 
+from Sales sa
+left join Product pr
+    on pr.product_id = sa.product_id
+
+
+-- 1581. Customer Who Visited but Did Not Make Any Transactions
+select 
+    customer_id,
+    count(visit_id) as count_no_trans
+from Visits
+where visit_id not in
+    (select 
+    distinct visit_id 
+    from Transactions)
+group by customer_id
+
+
+	
+
+-- 1683. Invalid Tweets
+with Emp_bonus as 
+    (select emp.name, bon.bonus
+    from Employee emp
+    left join Bonus bon 
+        on bon.empId = emp.empId)
+select * from Emp_bonus 
+where bonus is NULL or bonus < 1000
+
+	
+
 -- 2356. Number of Unique Subjects Taught by Each Teacher
 select 
     teacher_id,
@@ -70,6 +141,11 @@ from Register
 group by contest_id
 order by percentage desc, contest_id asc
 
+-- 620. Not Boring Movies
+select * from Cinema 
+where description NOT LIKE '%boring%'
+    AND mod(id, 2) <> 0
+order by rating DESC
 
 -- 1251. Average Selling Price
 with Units_revenue as
@@ -90,6 +166,18 @@ from Prices pr
 left join Units_revenue ur
     on pr.product_id = ur.product_id
 group by pr.product_id
+
+
+
+-- 1075. Project Employees I
+select 
+    pr.project_id,
+    round(AVG(experience_years), 2) as average_years
+from Project pr
+left join Employee em
+    on pr.employee_id = em.employee_id
+group by pr.project_id
+
 
 
 
@@ -147,3 +235,73 @@ select
 where count = 1
 order by num desc
 limit 1) as num 
+
+
+-- 1978. Employees Whose Manager Left the Company
+select employee_id
+from Employees 
+where salary < 30000 AND manager_id IS NOT NULL 
+    AND manager_id NOT IN (select employee_id from Employees)
+order by employee_id
+
+
+-- 185. Department Top Three Salaries
+with Salary_ranks as 
+    (Select
+        id,
+        name,
+        salary,
+        departmentId, 
+        DENSE_RANK() over(partition by departmentId order by salary desc) as salary_rank
+    FROM Employee)
+
+select 
+    dp.name as Department,
+    sr.name as Employee,
+    sr.salary as Salary
+from Salary_ranks sr 
+join Department dp on sr.departmentId = dp.id 
+where sr.salary_rank <= 3
+order by sr.salary
+
+
+-- 1667. Fix Names in a Table
+select 
+    user_id,
+    concat(upper(left(name, 1)), lower(substring(name, 2, length(name)))) as name
+from Users
+order by user_id
+
+
+-- 1527. Patients With a Condition
+select * from Patients 
+where conditions LIKE 'DIAB1%' or conditions LIKE '% DIAB1%'
+
+
+-- 196. Delete Duplicate Emails
+DELETE FROM Person
+where id IN
+
+ (SELECT id
+    FROM
+        (SELECT id,
+         ROW_NUMBER() OVER( PARTITION BY email   ORDER BY  id ) AS row_num
+        FROM Person ) t
+        WHERE t.row_num > 1 );
+
+
+-- 176 added
+
+
+-- 1484. Group Sold Products By The Date
+with Distinct_products as 
+    (select distinct sell_date, product
+    from Activities)
+
+select 
+    sell_date,
+    count(product) as num_sold,
+    string_agg(product, ',' order by product) as products                        
+from Distinct_products
+group by sell_date
+
